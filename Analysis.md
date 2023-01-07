@@ -1,107 +1,91 @@
-# COVID-Deaths-Rate-
+# COVID Deaths and Infection Rate in Countries (Analytics Using BigQuery)
 
-SELECT *
-FROM `my-project-coursera-361022.PortfolioProject.covid_deaths`
-WHERE continent is not null
-order by 3,4
+## QUESTIONS
+1. What country has the highest infection rate?
+2. Which country has the highest death count? 
+3. Which continent has the highest death count?
+4. What is the global death rate? 
+5. What is the global vaccination rate?
+6. What country has the highest vaccination rate?
 
--- Select data that we will use
-
-SELECT Location, date, total_cases, new_cases, total_deaths, population
-FROM PortfolioProject.covid_deaths
-ORDER BY 1,2
-
--- Look at Total cases and Total deaths
-SELECT Location, date, total_cases,total_deaths, (total_deaths/total_cases)*100 AS Death_percentage
-FROM PortfolioProject.covid_deaths
-ORDER BY 1,2
-
--- Look at Total cases and Total deaths in the United States
-SELECT Location, date, total_cases,total_deaths, (total_deaths/total_cases)*100 AS Death_percentage
-FROM PortfolioProject.covid_deaths
-WHERE Location = 'United States'
-ORDER BY 1,2
-
--- Look at Total cases and Population
--- Show what percentage of population got Covid in the US
-SELECT Location, date, population, total_cases,(total_deaths/population)*100 AS totalcases_per_population
-FROM PortfolioProject.covid_deaths
-WHERE Location = 'United States'
-ORDER BY 1,2
+## COMPUTED QUERIES AND ANALYSIS
 
 
--- Look at countries have the highest rate of infection compare to population
+### 1. What country has the highest infection rate?
+#### I used MAX to find country that has highest infection rate (relative to the population). The country with highest infection rate is Peru with 64.1%
+
 SELECT Location, population, MAX(total_cases) AS highest_infection_count,Max((total_deaths/population))*100 AS percent_population_infected
+
 FROM PortfolioProject.covid_deaths
+
 GROUP BY location, population
+
 ORDER BY percent_population_infected DESC
 
--- Showing Countries with Highest Death Count per Population
+### 2. Which country has the highest death count? 
+#### By grouping countries to calculate their total death counts, I found out the United States has the highest death counts among other countries. 
+
 SELECT Location, MAX(cast(total_deaths as int)) AS highest_death_count
+
 FROM PortfolioProject.covid_deaths
+
 WHERE continent is not null
+
 GROUP BY location
-ORDER BY highest_death_count DESC
---US has the highest death count
 
--- Showing Countries with Highest Death Count by Continent
+ORDER BY highest_death_count DESC
+
+### 3. Which continent has the highest death count? 
+#### By grouping continents to calculate their total death counts, I found out North America has the highest death counts among other countries with 1,095,235 deaths. 
+
 SELECT continent, MAX(cast(total_deaths as int)) AS highest_death_count
+
 FROM PortfolioProject.covid_deaths
+
 WHERE continent is not null
+
 GROUP BY continent
-ORDER BY highest_death_count DESC
--- North America has the highest death count in the world
 
--- Showing Global Death Rate
+ORDER BY highest_death_count DESC
+
+### 4. What is the global death rate?
+#### By dividing total new deaths by total new cases, the death rate is approximately 1%
+
 SELECT SUM(new_cases) AS total_global_cases, SUM(new_deaths) AS total_global_deaths, SUM(new_deaths)/SUM(new_cases)*100 AS global_death_rate
+
 FROM PortfolioProject.covid_deaths
+
 WHERE continent is not null
 
--- Look at Global Vaccinations Rate
-SELECT SUM(deaths.population), SUM(new_vaccinations), SUM(new_vaccinations)/SUM(deaths.population)*100
+### 5. What is the global vaccination rate?
+#### By dividing total new deaths by total new cases, the death rate is approximately 1%-- Look at Global Vaccinations Rate
+SELECT SUM(deaths.population), SUM(new_vaccinations), SUM(new_vaccinations)/SUM(deaths.population)*100  
+
 FROM PortfolioProject.covid_deaths AS deaths
+
 JOIN PortfolioProject.covid_vaccinations AS vacc
+
   ON deaths.location = vacc.location
+  
   AND deaths.date = vacc.date
 
--- Look at Vaccination Rate by Countries 
-SELECT deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, 
-SUM(vacc.new_vaccinations) OVER (PARTITION BY deaths.location ORDER BY deaths.location, deaths.date) AS RollingPeopleVaccinated,
-FROM PortfolioProject.covid_deaths AS deaths
-JOIN PortfolioProject.covid_vaccinations AS vacc
-  ON deaths.location = vacc.location
-  AND deaths.date = vacc.date
-WHERE deaths.continent IS NOT NULL
-ORDER BY 2,3
-
--- Population vs Vaccination using CTE
-
-WITH PopvsVac as 
-(
-  SELECT deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, 
-SUM(vacc.new_vaccinations) OVER (PARTITION BY deaths.location ORDER BY deaths.location, deaths.date) AS RollingPeopleVaccinated,
-FROM PortfolioProject.covid_deaths AS deaths
-JOIN PortfolioProject.covid_vaccinations AS vacc
-  ON deaths.location = vacc.location
-  AND deaths.date = vacc.date
-WHERE deaths.continent IS NOT NULL
-ORDER BY 2,3
-)
-
-SELECT *, RollingPeopleVaccinated/Population*100 AS Percent_population_vaccinated
-FROM PopvsVac
-
--- Creating view to store data for later visualization
-CREATE VIEW PortfolioProject.PercentPopulationVaccinated AS
+### 6. What country has the highest vaccination rate?
+#### Since the data is provided by date, which means we need the data of rolling people vaccinated to avoid double counting. Therefore, I use Partition By location and date to calculate the number of people vaccinated overtime. China has the highest number of vaccinations. 
 
 SELECT deaths.continent, deaths.location, deaths.date, deaths.population, vacc.new_vaccinations, 
+
 SUM(vacc.new_vaccinations) OVER (PARTITION BY deaths.location ORDER BY deaths.location, deaths.date) AS RollingPeopleVaccinated,
+
 FROM PortfolioProject.covid_deaths AS deaths
+
 JOIN PortfolioProject.covid_vaccinations AS vacc
+
   ON deaths.location = vacc.location
+  
   AND deaths.date = vacc.date
-WHERE deaths.continent IS NOT NULL;
+  
+WHERE deaths.continent IS NOT NULL
+
+ORDER BY 2,3
 
 
-SELECT *
-FROM PortfolioProject.PercentPopulationVaccinated
