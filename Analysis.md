@@ -6,7 +6,6 @@
 3. Which continent has the highest death count?
 4. What is the global death rate? 
 5. What is the global vaccination rate?
-6. What country has the highest vaccination rate?
 
 ## COMPUTED QUERIES AND ANALYSIS
 
