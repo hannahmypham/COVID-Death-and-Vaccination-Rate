@@ -87,4 +87,10 @@ WHERE deaths.continent IS NOT NULL
 
 ORDER BY 2,3
 
+## KEY TAKEAWAY
+1. Peru has highest infection rate and the United States has the highest death counts.
+2. North America has the highest death counts compare to other continents.
+3. Global death rate is 1%
+4. Global vaccination rate is 1%
+5. Country has the highets vaccination rate is China.
 
